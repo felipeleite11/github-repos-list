@@ -79,16 +79,24 @@ function App() {
 	const runSearch = useCallback(async search => {
 		if(search) {
 			try {
-				const userFinded = await fetch(`https://api.github.com/users/${search}`).then(response => response.json())
-				let reposFinded
+				const userFinded = await fetch(`https://api.github.com/users/${search}`)
+					.then(response => ({ 
+						data: response.json(), 
+						status: response.status 
+					}))
+				userFinded.data = await userFinded.data 
 
-				if(userFinded.login) {
-					reposFinded = await fetch(`https://api.github.com/users/${search}/repos`).then(response => response.json())
-				} else {
-					throw new Error('User not found!')
+				if(userFinded.status === 404) {
+					throw new Error('User not found.')
 				}
 
-				dispatch({ type: STATUS.RESOLVED, user: userFinded, repos: reposFinded || [] })
+				if(userFinded.status === 403) {
+					throw new Error('GitHub API unavailable.')
+				}
+
+				const reposFinded = await fetch(`https://api.github.com/users/${search}/repos`).then(response => response.json())
+
+				dispatch({ type: STATUS.RESOLVED, user: userFinded.data, repos: reposFinded })
 			} catch(e) {
 				dispatch({ type: STATUS.ERROR, error: e.message })
 			}
@@ -138,9 +146,11 @@ function App() {
 				</ProfileContainer>
 			)}
 
-			{showRepos && (
+			{showRepos && user && (
 				<RepoContainer id="repo-container">
-					<h1>{user.name}'s repos</h1>
+					<h1>
+						{user.name ? `${user.name}'s repos` : 'Unnamed user.'}
+					</h1>
 
 					<RepoList>
 						{repos.length > 0 ? repos.map(repo => (

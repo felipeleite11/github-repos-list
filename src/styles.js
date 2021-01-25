@@ -153,6 +153,10 @@ export const RepoContainer = styled.section.attrs({
 export const RepoList = styled.ul`
 	list-style: none;
 
+	> h2 {
+		margin: 0 10px;
+	}
+
 	li > a {
 		display: grid;
 		grid-template-columns: 30px auto;
