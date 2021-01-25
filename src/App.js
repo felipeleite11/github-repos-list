@@ -56,9 +56,9 @@ const searchReducer = (state, action) => {
 function App() {
 	const [showRepos, setShowRepos] = useState(false)
 	const [state, dispatch] = useReducer(searchReducer, {
-		status: '', 
-		user: '',
-		error: '',
+		status: STATUS.IDLE, 
+		user: null,
+		error: null,
 		repos: []
 	})
 
@@ -82,7 +82,7 @@ function App() {
 				const userFinded = await fetch(`https://api.github.com/users/${search}`).then(response => response.json())
 				let reposFinded
 
-				if(userFinded) {
+				if(userFinded.login) {
 					reposFinded = await fetch(`https://api.github.com/users/${search}/repos`).then(response => response.json())
 				} else {
 					throw new Error('User not found!')
@@ -90,8 +90,10 @@ function App() {
 
 				dispatch({ type: STATUS.RESOLVED, user: userFinded, repos: reposFinded || [] })
 			} catch(e) {
-				dispatch({ type: STATUS.ERROR, error: error.message })
+				dispatch({ type: STATUS.ERROR, error: e.message })
 			}
+		} else {
+			dispatch({ type: STATUS.IDLE })
 		}
 	}, [])
 
